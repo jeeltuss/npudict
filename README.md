@@ -14,7 +14,7 @@ Inspired by [soupawhisper](https://github.com/ksred/soupawhisper). npudict adapt
 - Python 3.10+
 - [uv](https://github.com/astral-sh/uv)
 - [lemonade-server](https://github.com/lemonade-sdk/lemonade) running locally
-- System packages: `alsa-utils`, `xclip`, `xdotool`, `libnotify`
+- System packages: `alsa-utils`, `wl-clipboard` (Wayland) or `xclip` (X11), `xdotool`, `libnotify`
 
 ---
 

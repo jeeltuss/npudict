@@ -51,11 +51,24 @@ def get_hotkey(key_name: str) -> keyboard.Key | keyboard.KeyCode:
     return keyboard.Key.f12
 
 
+def _copy_to_clipboard(text: str) -> None:
+    if subprocess.run(["which", "wl-copy"], capture_output=True).returncode == 0:
+        subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE).communicate(input=text.encode())
+    else:
+        subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE).communicate(input=text.encode())
+
+
 def check_dependencies(auto_type: bool) -> None:
     missing: list[tuple[str, str]] = []
-    for cmd, pkg in [("arecord", "alsa-utils"), ("xclip", "xclip")]:
-        if subprocess.run(["which", cmd], capture_output=True).returncode != 0:
-            missing.append((cmd, pkg))
+    if subprocess.run(["which", "arecord"], capture_output=True).returncode != 0:
+        missing.append(("arecord", "alsa-utils"))
+    is_wayland = os.environ.get("XDG_SESSION_TYPE") == "wayland"
+    has_wl_copy = subprocess.run(["which", "wl-copy"], capture_output=True).returncode == 0
+    has_xclip = subprocess.run(["which", "xclip"], capture_output=True).returncode == 0
+    if is_wayland and not has_wl_copy:
+        missing.append(("wl-copy", "wl-clipboard"))
+    elif not is_wayland and not has_xclip:
+        missing.append(("xclip", "xclip"))
     if auto_type and subprocess.run(["which", "xdotool"], capture_output=True).returncode != 0:
         missing.append(("xdotool", "xdotool"))
     if missing:
@@ -137,7 +150,7 @@ class Dictation:
             self.notify("No speech detected", "Try speaking louder", "dialog-warning", 2000)
             return
 
-        subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE).communicate(input=text.encode())
+        _copy_to_clipboard(text)
 
         if self.auto_type:
             subprocess.run(["xdotool", "type", "--clearmodifiers", text])
