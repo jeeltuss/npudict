@@ -10,11 +10,11 @@ Inspired by [soupawhisper](https://github.com/ksred/soupawhisper). npudict adapt
 
 ## Requirements
 
-- Linux with X11
+- Linux (Wayland + X11)
 - Python 3.10+
 - [uv](https://github.com/astral-sh/uv)
 - [lemonade-server](https://github.com/lemonade-sdk/lemonade) running locally
-- System packages: `alsa-utils`, `wl-clipboard` (Wayland) or `xclip` (X11), `xdotool`, `libnotify`
+- System packages: `alsa-utils`, `wl-clipboard` (Wayland) or `xclip` (X11), `ydotool` (recommended) or `xdotool` (X11 fallback), `libnotify`
 
 ---
 
@@ -67,6 +67,23 @@ notifications = false
 
 ---
 
+## Text input
+
+npudict uses `ydotool` (kernel-level input via uinput) if available, otherwise falls back to `xdotool` (X11).
+
+`ydotool` works on any compositor (Wayland/X11) and avoids dropped characters. `xdotool` on Wayland (via XWayland) may drop spaces or characters in some applications.
+
+To set up ydotool:
+
+```bash
+sudo usermod -aG input $USER
+systemctl --user enable --now ydotool
+```
+
+Reboot required for the group change to take effect.
+
+---
+
 ## Usage
 
 ```bash
@@ -92,3 +109,5 @@ To reinstall the service (e.g. after moving the directory):
 ```bash
 bash install.sh
 ```
+
+The service uses `PassEnvironment=XAUTHORITY` to avoid issues with the XAUTHORITY path changing on each login. No need to manually update the service after reboot.

@@ -69,8 +69,11 @@ def check_dependencies(auto_type: bool) -> None:
         missing.append(("wl-copy", "wl-clipboard"))
     elif not is_wayland and not has_xclip:
         missing.append(("xclip", "xclip"))
-    if auto_type and subprocess.run(["which", "xdotool"], capture_output=True).returncode != 0:
-        missing.append(("xdotool", "xdotool"))
+    if auto_type:
+        has_ydotool = subprocess.run(["which", "ydotool"], capture_output=True).returncode == 0
+        has_xdotool = subprocess.run(["which", "xdotool"], capture_output=True).returncode == 0
+        if not has_ydotool and not has_xdotool:
+            missing.append(("ydotool or xdotool", "ydotool"))
     if missing:
         print("Missing dependencies:")
         for cmd, pkg in missing:
@@ -153,7 +156,10 @@ class Dictation:
         _copy_to_clipboard(text)
 
         if self.auto_type:
-            subprocess.run(["xdotool", "type", "--clearmodifiers", text])
+            if subprocess.run(["which", "ydotool"], capture_output=True).returncode == 0:
+                subprocess.run(["ydotool", "type", "--", text])
+            else:
+                subprocess.run(["xdotool", "type", "--clearmodifiers", "--delay", "30", text])
 
         print(f"Copied: {text}")
         self.notify("Copied!", text[:100] + ("..." if len(text) > 100 else ""), "emblem-ok-symbolic", 3000)

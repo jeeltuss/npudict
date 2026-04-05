@@ -33,20 +33,20 @@ install_deps() {
     case $pm in
         apt)
             sudo apt update
-            sudo apt install -y alsa-utils xclip wl-clipboard xdotool libnotify-bin
+            sudo apt install -y alsa-utils xclip wl-clipboard xdotool ydotool libnotify-bin
             ;;
         dnf)
-            sudo dnf install -y alsa-utils xclip wl-clipboard xdotool libnotify
+            sudo dnf install -y alsa-utils xclip wl-clipboard xdotool ydotool libnotify
             ;;
         pacman)
-            sudo pacman -S --needed --noconfirm alsa-utils wl-clipboard xdotool libnotify
+            sudo pacman -S --needed --noconfirm alsa-utils wl-clipboard xdotool ydotool libnotify
             ;;
         zypper)
-            sudo zypper install -y alsa-utils xclip wl-clipboard xdotool libnotify-tools
+            sudo zypper install -y alsa-utils xclip wl-clipboard xdotool ydotool libnotify-tools
             ;;
         *)
             echo "Unknown package manager. Please install manually:"
-            echo "  alsa-utils xclip wl-clipboard xdotool libnotify"
+            echo "  alsa-utils xclip wl-clipboard xdotool ydotool libnotify"
             ;;
     esac
 }
@@ -100,7 +100,6 @@ install_service() {
     mkdir -p "$SERVICE_DIR"
 
     local display="${DISPLAY:-:0}"
-    local xauthority="${XAUTHORITY:-$HOME/.Xauthority}"
 
     cat > "$SERVICE_DIR/npudict.service" << EOF
 [Unit]
@@ -114,7 +113,7 @@ ExecStart=$SCRIPT_DIR/.venv/bin/python $SCRIPT_DIR/dictate.py
 Restart=on-failure
 RestartSec=5
 Environment=DISPLAY=$display
-Environment=XAUTHORITY=$xauthority
+PassEnvironment=XAUTHORITY
 
 [Install]
 WantedBy=default.target
@@ -124,6 +123,12 @@ EOF
 
     systemctl --user daemon-reload
     systemctl --user enable npudict
+
+    echo ""
+    echo "ydotool setup (recommended for Wayland):"
+    echo "  sudo usermod -aG input \$USER"
+    echo "  systemctl --user enable --now ydotool"
+    echo "  # Reboot required for group change"
 
     echo ""
     echo "Service installed! Commands:"
